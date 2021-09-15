@@ -1,22 +1,20 @@
-FROM alpine:latest
+FROM debian:bullseye-slim
 
-RUN apk --no-cache add \
-    bash \
-    git \
+RUN apt-get update && \
+    apt-get install -y \
+    locales \
     openssh-client \
-    git-lfs \ 
-    tzdata \
-    && mkdir -p /root/.ssh
+    gnupg \
+    git-crypt \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Europe/Copenhagen
 
-ENV BRANCH master
-ENV URL null
-
-RUN mkdir -p /repo
+RUN mkdir -p /repo && mkdir /root/.ssh
 WORKDIR /repo
 
-RUN echo -e "Host github.com\n     IdentityFile /root/.ssh/id_rsa\n     IdentitiesOnly yes\n     StrictHostKeyChecking No" > /root/.ssh/config
+COPY ssh/config /root/.ssh/config
 
 COPY git-pull.sh /git-pull.sh
 RUN chmod +x /git-pull.sh
