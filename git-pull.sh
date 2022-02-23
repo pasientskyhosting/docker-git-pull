@@ -1,10 +1,16 @@
 #!/bin/bash -e
 SYNC_INTERVAL="${SYNC_INTERVAL:=30}"
 GIT_REPO_BRANCH="${GIT_REPO_BRANCH:=main}"
+WHITELIST_DIR="${WHITELIST_DIR:=/etc/crowdsec/parsers/s02-enrich}"
 
 if [[ -z "${GIT_REPO}" ]]; then
     echo "Missing git repo URL"
     exit 1
+fi
+
+if [ ! -d "${WHITELIST_DIR}" ]; then
+  echo "Whitelist directory directory does not exist"
+  exit 1
 fi
 
 echo "GIT_REPO=$GIT_REPO"
@@ -29,6 +35,12 @@ while true; do
       fi
     fi
   fi
+  # update the whitelists if diff found
+  if [[ $(diff <(find /repo/whitelists -type f -exec md5sum {} + | sort -k 2 | cut -f1 -d" ") <(find ${WHITELIST_DIR} -type f -exec md5sum {} + | sort -k 2 | cut -f1 -d" ")) != "" ]]; then 
+    find ${WHITELIST_DIR} -type f -delete
+    cp -u -r /repo/whitelists/. ${WHITELIST_DIR}
+  fi
+  
   echo "Done. Sleeping $SYNC_INTERVAL seconds..."
   sleep $SYNC_INTERVAL
 done
