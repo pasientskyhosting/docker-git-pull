@@ -10,13 +10,13 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Europe/Copenhagen
+RUN useradd -ms /bin/bash git
+USER git
+RUN mkdir -p /home/git/repo && mkdir /home/git/.ssh
+WORKDIR /home/git/repo
 
-RUN mkdir -p /repo && mkdir /root/.ssh
-WORKDIR /repo
+COPY ssh/config /home/git/.ssh/config
 
-COPY ssh/config /root/.ssh/config
+COPY git-pull.sh /home/git/git-pull.sh
 
-COPY git-pull.sh /git-pull.sh
-RUN chmod +x /git-pull.sh
-
-CMD ["/git-pull.sh"]
+CMD ["/home/git/git-pull.sh"]
